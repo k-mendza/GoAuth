@@ -14,8 +14,8 @@ import (
 
 type User struct {
 	ID        uint32    `gorm:"primary_key;auto_increment" json:"id"`
-	FirstName string    `gorm:"size:255;not null;unique" json:"first_name"`
-	LastName  string    `gorm:"size:255;not null;unique" json:"last_name"`
+	FirstName string    `gorm:"size:255;not null" json:"first_name"`
+	LastName  string    `gorm:"size:255;not null" json:"last_name"`
 	Email     string    `gorm:"size:100;not null;unique" json:"email"`
 	Password  string    `gorm:"size:100;not null;" json:"password"`
 	CreatedAt time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
@@ -139,11 +139,11 @@ func (user *User) UpdateAUser(db *gorm.DB, uid uint32) (*User, error) {
 	}
 	db = db.Debug().Model(&User{}).Where("id = ?", uid).Take(&User{}).UpdateColumns(
 		map[string]interface{}{
-			"first_name":  user.FirstName,
-			"last_name": user.LastName,
-			"email":     user.Email,
-			"password":  user.Password,
-			"update_at": time.Now(),
+			"first_name": user.FirstName,
+			"last_name":  user.LastName,
+			"email":      user.Email,
+			"password":   user.Password,
+			"updated_at": time.Now(),
 		},
 	)
 	if db.Error != nil {

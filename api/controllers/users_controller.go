@@ -73,47 +73,46 @@ func (server *Server) GetUser(w http.ResponseWriter, r *http.Request) {
 	responses.JSON(w, http.StatusOK, userGotten)
 }
 
-func (server *Server) UpdateUser(w http.ResponseWriter, r *http.Request) {
-
-	vars := mux.Vars(r)
+func (server *Server) UpdateUser(responseWriter http.ResponseWriter, request *http.Request) {
+	vars := mux.Vars(request)
 	uid, err := strconv.ParseUint(vars["id"], 10, 32)
 	if err != nil {
-		responses.ERROR(w, http.StatusBadRequest, err)
+		responses.ERROR(responseWriter, http.StatusBadRequest, err)
 		return
 	}
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := ioutil.ReadAll(request.Body)
 	if err != nil {
-		responses.ERROR(w, http.StatusUnprocessableEntity, err)
+		responses.ERROR(responseWriter, http.StatusUnprocessableEntity, err)
 		return
 	}
 	user := models.User{}
 	err = json.Unmarshal(body, &user)
 	if err != nil {
-		responses.ERROR(w, http.StatusUnprocessableEntity, err)
+		responses.ERROR(responseWriter, http.StatusUnprocessableEntity, err)
 		return
 	}
-	tokenID, err := auth.ExtractTokenID(r)
+	tokenID, err := auth.ExtractTokenID(request)
 	if err != nil {
-		responses.ERROR(w, http.StatusUnauthorized, errors.New("Unauthorized"))
+		responses.ERROR(responseWriter, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
 		return
 	}
 	if tokenID != uint32(uid) {
-		responses.ERROR(w, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
+		responses.ERROR(responseWriter, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
 		return
 	}
 	user.Prepare()
 	err = user.Validate("update")
 	if err != nil {
-		responses.ERROR(w, http.StatusUnprocessableEntity, err)
+		responses.ERROR(responseWriter, http.StatusUnprocessableEntity, err)
 		return
 	}
 	updatedUser, err := user.UpdateAUser(server.DB, uint32(uid))
 	if err != nil {
 		formattedError := errorformatter.FormatError(err.Error())
-		responses.ERROR(w, http.StatusInternalServerError, formattedError)
+		responses.ERROR(responseWriter, http.StatusInternalServerError, formattedError)
 		return
 	}
-	responses.JSON(w, http.StatusOK, updatedUser)
+	responses.JSON(responseWriter, http.StatusOK, updatedUser)
 }
 
 func (server *Server) DeleteUser(w http.ResponseWriter, r *http.Request) {
@@ -129,7 +128,7 @@ func (server *Server) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	}
 	tokenID, err := auth.ExtractTokenID(r)
 	if err != nil {
-		responses.ERROR(w, http.StatusUnauthorized, errors.New("Unauthorized"))
+		responses.ERROR(w, http.StatusUnauthorized, errors.New(http.StatusText(http.StatusUnauthorized)))
 		return
 	}
 	if tokenID != 0 && tokenID != uint32(uid) {
